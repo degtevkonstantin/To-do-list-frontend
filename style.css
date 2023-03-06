@@ -15,7 +15,7 @@
   align-items: center;
 }
 
-#add-task {
+.main-input {
   width: 100%;
   margin-right: 10px;
   border: 0px;

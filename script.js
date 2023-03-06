@@ -1,43 +1,46 @@
 let allTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+let sortAllTasks = allTasks
 
 window.onload = () => {
   render();
 }
 
-const allTasksDelete = () => { // функция удаления всех тасков
+const deleteAllTasks = () => {
   allTasks = [];
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
 }
 
 const showError = (message) => {
-  error = document.getElementById('error');
+  const error = document.getElementById('error');
+  if (!error){
+    return
+  }
   error.innerText = message
 }
 
-const checkEmptyLine = (string) => { // проверка на пустую строку
-  return string.trim() !== ''
+const checkEmptyString = (string) => { // проверка на пустую строку
+  return string.trim() !== '';
 }
 
 const addTask = () => { // функция добавление таска
-  if (document.getElementById('add-task') === null) {
-    showError('Отсутсвует блок')
-    return;
-  }
-
   const input = document.getElementById('add-task')
-  if (checkEmptyLine(input.value)) {
-    allTasks.push({
-      text: input.value,
-      isCheck: false
-    });
-    input.value = '';
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
-    render();
+
+  if (!input) {
     return;
   }
 
-  showError('Вы ничего не ввели');
+  if (!checkEmptyString(input.value)) {
+    showError('Вы ничего не ввели');
+    return;
+  }
+  allTasks.push({
+    text: input.value,
+    isCheck: false
+  });
+  input.value = '';
+  localStorage.setItem('tasks', JSON.stringify(allTasks));
+  render();
   return;
 }
 
@@ -51,7 +54,8 @@ render = () => {
     content.removeChild(content.firstChild);
   };
 
-  allTasks.sort((a, b) => {
+
+   sortAllTasks.sort((a, b) => {
     if (a.isCheck > b.isCheck) {
       return 1;
     }
@@ -61,23 +65,25 @@ render = () => {
     return 0;
   })
 
-  allTasks.forEach((element, index) => {
-    const { text: elementText, isCheck: elementIsCheck } = element;
+  
+
+  sortAllTasks.forEach((task, index) => {
+    const { text: taskText, isCheck: IsCheck } = task;
     const container = document.createElement('div');
     container.id = `task-${index}`;
     container.className = 'tasks';
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.checked = elementIsCheck;
+    checkbox.checked = IsCheck;
     container.appendChild(checkbox);
     checkbox.onchange = () => {
-      checkboxSwap(element);
+      editCheckbox(index);
     }
 
     const text = document.createElement('p');
-    text.innerText = elementText;
-    text.className = elementIsCheck ? 'text-tasks, done-text' : 'text-tasks';
+    text.innerText = taskText;
+    text.className = IsCheck ? 'text-tasks, done-text' : 'text-tasks';
     container.appendChild(text);
 
     const imageEdit = document.createElement('img');
@@ -87,72 +93,75 @@ render = () => {
     buttonEdit.appendChild(imageEdit);
     container.appendChild(buttonEdit);
     buttonEdit.onclick = () => {
-      fuctionEdit(container, text, checkbox, imageEdit, imageDelete, buttonDel, buttonEdit, elementText, element)
+      editTask(container.id, task)
     }
 
     const imageDelete = document.createElement('img');
-    const buttonDel = document.createElement('button');
+    const buttonDelete = document.createElement('button');
     imageDelete.src = 'img/Delete.svg';
     imageDelete.alt = ''
-    buttonDel.id = 'id-delete';
-    buttonDel.appendChild(imageDelete);
-    container.appendChild(buttonDel);
+    buttonDelete.id = 'id-delete';
+    buttonDelete.appendChild(imageDelete);
+    container.appendChild(buttonDelete);
     content.appendChild(container);
 
-    buttonDel.onclick = () => {
-      clickDelete(index);
+    buttonDelete.onclick = () => {
+      deleteTask(index);
     }
   })
-  document.getElementById('error').textContent = ''
+  showError('');
 }
 
-const checkboxSwap = (element) => {
-  element.isCheck = !element.isCheck;
+const editCheckbox = (index) => {
+  console.log(allTasks)
+  allTasks[index].isCheck = !allTasks[index].isCheck;
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
 }
 
+const editTask = (id, task) => { //функция редактировать
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'edit-input';
+  container = document.getElementById(id)
+  input.value = task.text
+  
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+  container.appendChild(input)
 
-const fuctionEdit = (container, text, checkbox, imageEdit, imageDelete, buttonDel, buttonEdit, elementText, element) => { //функция редактировать
-  const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.className = 'edit-input';
-  inp.id = 'idInp';
+  const saveEdit = document.createElement('button'); 
+  saveEdit.type = 'button';
+  const imageEdit = document.createElement('img')
+  imageEdit.src = 'img/Edit.svg'
+  saveEdit.appendChild(imageEdit);
+  container.appendChild(saveEdit);
 
-  container.removeChild(text);
-  container.removeChild(buttonEdit);
-  container.removeChild(buttonDel);
-  container.removeChild(checkbox);
-  container.appendChild(inp);
-
-  const editReturn = document.createElement('button'); 
-  editReturn.type = 'button';
-  editReturn.appendChild(imageEdit);
-  container.appendChild(editReturn);
-
-  editReturn.onclick = () => {
-    clickEFinishEdit(inp, element)
+  saveEdit.onclick = () => {
+    finishEdit(input, task)
   };
 
   const buttonCancel = document.createElement('button'); 
-  inp.value = elementText;
+  const imageDelete = document.createElement('img')
+  imageDelete.src = 'img/Delete.svg'
   buttonCancel.appendChild(imageDelete);
   container.appendChild(buttonCancel);
 
   buttonCancel.onclick = () => { 
-    clickCancel(elementText)
+    render()
   }
 }
 
-const clickDelete = (index) => { 
+const deleteTask = (index) => { 
   array = allTasks.splice(index, 1);
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
 }
 
-const clickEFinishEdit = (inp, element) => {
-  if (checkEmptyLine(inp.value)) {
-    element.text = inp.value;
+const finishEdit = (inp, task) => {
+  if (checkEmptyString(inp.value)) {
+    task.text = inp.value;
     localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
     return;
@@ -160,9 +169,3 @@ const clickEFinishEdit = (inp, element) => {
   showError('Вы ничего не ввели');
   return;
 };
-
-const clickCancel = (elementText) => {
-  elementText = elementText;
-  localStorage.setItem('tasks', JSON.stringify(allTasks));
-  render();
-}
