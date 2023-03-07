@@ -1,5 +1,4 @@
 let allTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-let sortAllTasks = allTasks
 
 window.onload = () => {
   render();
@@ -7,8 +6,10 @@ window.onload = () => {
 
 const deleteAllTasks = () => {
   allTasks = [];
+  sortAllTasks = [];
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
+  return
 }
 
 const showError = (message) => {
@@ -41,10 +42,11 @@ const addTask = () => { // функция добавление таска
   input.value = '';
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
-  return;
 }
 
 render = () => {
+  let sortAllTasks = allTasks
+
   const content = document.getElementById('content-page');
   if (!content) {
     return;
@@ -53,7 +55,6 @@ render = () => {
   while (content.firstChild) {
     content.removeChild(content.firstChild);
   };
-
 
    sortAllTasks.sort((a, b) => {
     if (a.isCheck > b.isCheck) {
@@ -65,42 +66,43 @@ render = () => {
     return 0;
   })
 
-  
-
   sortAllTasks.forEach((task, index) => {
-    const { text: taskText, isCheck: IsCheck } = task;
+    const isCheck = task.isCheck
+    const taskText = task.text
     const container = document.createElement('div');
     container.id = `task-${index}`;
     container.className = 'tasks';
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.checked = IsCheck;
+    checkbox.checked = isCheck;
     container.appendChild(checkbox);
     checkbox.onchange = () => {
       editCheckbox(index);
     }
 
     const text = document.createElement('p');
+    text.id = `text-${index}`
     text.innerText = taskText;
-    text.className = IsCheck ? 'text-tasks, done-text' : 'text-tasks';
+    text.className = isCheck ? 'text-tasks, done-text' : 'text-tasks';
     container.appendChild(text);
 
-    const imageEdit = document.createElement('img');
     const buttonEdit = document.createElement('button');
+    buttonEdit.id = `btn-edit-${index}`
+    const imageEdit = document.createElement('img');
     imageEdit.src = 'img/Edit.svg';
     imageEdit.alt = '';
     buttonEdit.appendChild(imageEdit);
     container.appendChild(buttonEdit);
     buttonEdit.onclick = () => {
-      editTask(container.id, task)
+      editTask(index, task)
     }
 
-    const imageDelete = document.createElement('img');
     const buttonDelete = document.createElement('button');
+    buttonDelete.id = `btn-delete-${index}`
+    const imageDelete = document.createElement('img');
     imageDelete.src = 'img/Delete.svg';
     imageDelete.alt = ''
-    buttonDelete.id = 'id-delete';
     buttonDelete.appendChild(imageDelete);
     container.appendChild(buttonDelete);
     content.appendChild(container);
@@ -113,40 +115,27 @@ render = () => {
 }
 
 const editCheckbox = (index) => {
-  console.log(allTasks)
   allTasks[index].isCheck = !allTasks[index].isCheck;
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
 }
 
-const editTask = (id, task) => { //функция редактировать
+const editTask = (index, task) => { //функция редактировать
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'edit-input';
-  container = document.getElementById(id)
+  const container = document.getElementById(`task-${index}`)
   input.value = task.text
-  
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
-  container.appendChild(input)
 
-  const saveEdit = document.createElement('button'); 
-  saveEdit.type = 'button';
-  const imageEdit = document.createElement('img')
-  imageEdit.src = 'img/Edit.svg'
-  saveEdit.appendChild(imageEdit);
-  container.appendChild(saveEdit);
+  const text = document.getElementById(`text-${index}`)
+  container.replaceChild(input, text)
+  
+  const saveEdit = document.getElementById(`btn-edit-${index }`)
+  const buttonCancel = document.getElementById(`btn-delete-${index}`)
 
   saveEdit.onclick = () => {
-    finishEdit(input, task)
+    endEditing(input.value, task);
   };
-
-  const buttonCancel = document.createElement('button'); 
-  const imageDelete = document.createElement('img')
-  imageDelete.src = 'img/Delete.svg'
-  buttonCancel.appendChild(imageDelete);
-  container.appendChild(buttonCancel);
 
   buttonCancel.onclick = () => { 
     render()
@@ -154,14 +143,15 @@ const editTask = (id, task) => { //функция редактировать
 }
 
 const deleteTask = (index) => { 
-  array = allTasks.splice(index, 1);
+  allTasks.splice(index, 1);
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
 }
 
-const finishEdit = (inp, task) => {
-  if (checkEmptyString(inp.value)) {
-    task.text = inp.value;
+const endEditing = (input, task) => {
+  if (checkEmptyString(input)) {
+    task.text = input;
+    console.log(task, input)
     localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
     return;
