@@ -6,26 +6,26 @@ window.onload = () => {
 
 const deleteAllTasks = () => {
   allTasks = [];
-  sortAllTasks = [];
   localStorage.setItem('tasks', JSON.stringify(allTasks));
   render();
-  return
 }
 
 const showError = (message) => {
   const error = document.getElementById('error');
+
   if (!error){
     return
   }
-  error.innerText = message
+
+  error.innerText = message;
 }
 
-const checkEmptyString = (string) => { // проверка на пустую строку
+const checkEmptyString = (string) => { 
   return string.trim() !== '';
 }
 
-const addTask = () => { // функция добавление таска
-  const input = document.getElementById('add-task')
+const addTask = () => { 
+  const input = document.getElementById('add-task');
 
   if (!input) {
     return;
@@ -35,6 +35,7 @@ const addTask = () => { // функция добавление таска
     showError('Вы ничего не ввели');
     return;
   }
+
   allTasks.push({
     text: input.value,
     isCheck: false
@@ -44,10 +45,10 @@ const addTask = () => { // функция добавление таска
   render();
 }
 
-render = () => {
-  let sortAllTasks = allTasks
+const render = () => {
 
   const content = document.getElementById('content-page');
+
   if (!content) {
     return;
   };
@@ -56,19 +57,21 @@ render = () => {
     content.removeChild(content.firstChild);
   };
 
-   sortAllTasks.sort((a, b) => {
+   const sortAllTasks = allTasks.sort((a, b) => {
+
     if (a.isCheck > b.isCheck) {
       return 1;
     }
+
     if (a.isCheck < b.isCheck) {
       return -1;
     }
+
     return 0;
   })
 
   sortAllTasks.forEach((task, index) => {
-    const isCheck = task.isCheck
-    const taskText = task.text
+    const {text: taskText, isCheck: isCheck} = task
     const container = document.createElement('div');
     container.id = `task-${index}`;
     container.className = 'tasks';
@@ -120,25 +123,27 @@ const editCheckbox = (index) => {
   render();
 }
 
-const editTask = (index, task) => { //функция редактировать
+const editTask = (index, task) => { 
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'edit-input';
+  input.id = `input-${index}`
   const container = document.getElementById(`task-${index}`)
   input.value = task.text
+  const saveValue = task.text
 
   const text = document.getElementById(`text-${index}`)
   container.replaceChild(input, text)
   
-  const saveEdit = document.getElementById(`btn-edit-${index }`)
+  const buttonEdit = document.getElementById(`btn-edit-${index }`)
   const buttonCancel = document.getElementById(`btn-delete-${index}`)
 
-  saveEdit.onclick = () => {
-    endEditing(input.value, task);
+  buttonEdit.onclick = () => {
+    saveEdit(input.value, index);
   };
 
   buttonCancel.onclick = () => { 
-    render()
+    cancelEdit(index, saveValue, task)
   }
 }
 
@@ -148,14 +153,33 @@ const deleteTask = (index) => {
   render();
 }
 
-const endEditing = (input, task) => {
-  if (checkEmptyString(input)) {
-    task.text = input;
-    console.log(task, input)
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
-    render();
+const saveEdit = (input, index) => {
+
+  if (!checkEmptyString(input)) {
+    showError('Вы ничего не ввели');
     return;
   }
-  showError('Вы ничего не ввели');
-  return;
+  allTasks[index].text = input;
+  localStorage.setItem('tasks', JSON.stringify(allTasks));
+  render();
 };
+
+const cancelEdit = (index, saveValue, task) => {
+  const container = document.getElementById(`task-${index}`)
+  const text = document.createElement('p')
+  text.className = 'text-tasks'
+  text.id = `text-${index}`
+  text.innerText = saveValue;
+  const input = document.getElementById(`input-${index}`)
+  container.replaceChild(text, input)
+  const buttonDelete = document.getElementById(`btn-delete-${index}`)
+  const buttonEdit = document.getElementById(`btn-edit-${index }`)
+  buttonDelete.onclick = () => {
+    deleteTask(index);
+  }
+
+  buttonEdit.onclick = () => {
+    editTask(index, task)
+  }
+
+}
